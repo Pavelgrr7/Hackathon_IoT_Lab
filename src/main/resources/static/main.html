@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статус ресурсов</title>
+    <link rel="stylesheet" href="styles_main.css">
+</head>
+<body>
+    <div class="stats-container">
+        <div class="stat">
+            <div class="progress-circle" id="cpu-progress">
+                <span class="progress-value" id="cpu-value">0%</span>
+            </div>
+            <p>CPU: <span id="cpu-details">1 Core</span></p>
+        </div>
+        <div class="stat">
+            <div class="progress-circle" id="ram-progress">
+                <span class="progress-value" id="ram-value">0%</span>
+            </div>
+            <p>RAM: <span id="ram-details">0 MB / 0 GB</span></p>
+        </div>
+        <div class="stat">
+            <div class="progress-circle" id="swap-progress">
+                <span class="progress-value" id="swap-value">0%</span>
+            </div>
+            <p>Swap: <span id="swap-details">0 B / 0 MB</span></p>
+        </div>
+    </div>
+    <!-- <script src="script.js"></script> -->
+    <div class="sensors-container">
+        <h1>Список датчиков</h1>
+        <ul class="sensors-list" id="sensors-list">
+            <!-- Датчики будут добавлены динамически -->
+        </ul>
+    </div>
+    <script src="main_script.js"></script>
+</body>
+</html>

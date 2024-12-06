@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добро пожаловать</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Добро пожаловать</h1>
+        <form class="form">
+            <div class="input-group">
+                <input type="text" placeholder="Введите логин" class="input" id="username">
+                <span class="icon">👤</span>
+            </div>
+            <div class="input-group">
+                <input type="password" placeholder="Введите пароль" class="input" id="password">
+                <span class="icon">🔒</span>
+                <button type="button" class="toggle-password">👁</button>
+            </div>
+            <button type="submit" class="button" id="normal_user">Войти</button>
+            <button type="submit" class="button" id="admin_user">Войти в режим </button>
+        </form>
+    </div>
+</body>
+</html>
+
+<script src="login_script.js"></script>
