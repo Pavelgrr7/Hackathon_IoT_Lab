@@ -40,17 +40,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function postCredenitals(username, password, isAdmin) {
     console.log("Отправляю JSON:    " + JSON.stringify({ "username":username, "password":password }));
-    // let url = "http://192.168.0.139:8080/login";
-    let url = "http://192.168.1.244:8080//login";
+    let url = "http://192.168.0.139:8080/login";
+    // let url = "http://192.168.1.244:8080/login";
 
     if (isAdmin == true) {
-        // url = "http://192.168.0.139:8080/login";
-        let url = "http://192.168.1.244:8080//login";
+        url = "http://192.168.0.139:8080/login";
+        // url = "http://192.168.1.244:8080/login";
 
     } else {
-        // url = "http://192.168.0.139:8080/login";
-        let url = "http://192.168.1.244:8080//login";
-
+        url = "http://192.168.0.139:8080/login";
+        // url = "http://192.168.1.244:8080/login";
     }
     const response = await fetch(url, {
         method:"POST",
@@ -60,6 +59,7 @@ async function postCredenitals(username, password, isAdmin) {
         body: JSON.stringify({ "username":username, "password":password }),
     });
     const data = await response.json();
+    console.log(data)
     const success = data["success"];
     if (success == true) {
         location.href = "main.html";

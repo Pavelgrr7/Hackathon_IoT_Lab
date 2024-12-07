@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статус ресурсов</title>
+    <link rel="stylesheet" href="styles_cervice_mode.css">
+</head>
+<body>
+    <div class="service-mode">
+        <h2>Режим обслуживания</h2>
+        <div id="service-list">
+            <!-- Список сервисных настроек -->
+            <div class="service-item">
+                <span>Проверка открывания двери сервоприводом</span>
+                <button class="service-check-button" data-device="door-servo">Проверить</button>
+                <input type="checkbox" id="door-servo-checked" class="service-checkbox" disabled />
+            </div>
+            <div class="service-item">
+                <span>Проверка открывания окна сервоприводом</span>
+                <button class="service-check-button" data-device="window-servo">Проверить</button>
+                <input type="checkbox" id="window-servo-checked" class="service-checkbox" disabled />
+            </div>
+            <div class="service-item">
+                <span>Проверка помпы</span>
+                <button class="service-check-button" data-device="pump">Проверить</button>
+                <input type="checkbox" id="pump-checked" class="service-checkbox" disabled />
+            </div>
+            <div class="service-item">
+                <span>Проверка вентилятора</span>
+                <button class="service-check-button" data-device="fan">Проверить</button>
+                <input type="checkbox" id="fan-checked" class="service-checkbox" disabled />
+            </div>
+            <div class="service-item">
+                <span>Проверка работы LED ленты</span>
+                <button class="service-check-button" data-device="led-strip">Проверить</button>
+                <input type="checkbox" id="led-strip-checked" class="service-checkbox" disabled />
+            </div>
+        </div>
+        <button id="check-all-button" class="check-all-button">Проверить всё</button>
+    </div>
+    <script src="service_mode_script.js"></script>
+</body>
+</html>

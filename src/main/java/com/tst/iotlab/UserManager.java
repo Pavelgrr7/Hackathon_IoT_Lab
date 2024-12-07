@@ -11,7 +11,7 @@ public class UserManager {
 
     public UserManager() {
         try {
-            loadUsers("users/Users.txt");
+            loadUsers("C:\\Users\\Pavel\\IdeaProjects\\iotlab\\users\\Users.txt");
         } catch (IOException e) {
             System.err.println("Error loading users: " + e.getMessage());
         }

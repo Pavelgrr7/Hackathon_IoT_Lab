@@ -4,16 +4,19 @@ body {
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center; /* Центрирование по вертикали */
     align-items: center;    /*Центрирование по горизонтали*/
-    /* height: 100vh; */
 }
 
 .stats-container {
     display: flex;
+    max-width: 70%;
     gap: 20px;
     background: #ffffff;
+    align-items: center;
+    justify-content: center;
+    display: flex;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -82,6 +85,10 @@ h1 {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.spacer {
+    width: 50px;
+}
+
 .sensor-name {
     font-size: 16px;
     font-weight: bold;
@@ -99,4 +106,70 @@ h1 {
 
 .sensor-status.low {
     color: #cc0000; /* Красный для "LOW" */
+}
+
+
+
+.devices-container {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.devices-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+.device {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.device-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.device-name {
+    flex: 1;
+    text-align: left;
+    font-size: 16px;
+}
+
+.toggle-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4caf50; /* Зеленый для "Включить" */
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.toggle-button.off {
+    background-color: #f44336; /* Красный для "Выключить" */
+}
+
+.device-status {
+    margin-left: 10px;
+    font-size: 14px;
+    font-style: italic;
+    color: gray; /* Статус по умолчанию */
+    transition: color 0.3s;
+}
+
+.device-status.on {
+    color: green; /* Зеленый для "Работает" */
+}
+
+.device-status.off {
+    color: red; /* Красный для "Не работает" */
 }
