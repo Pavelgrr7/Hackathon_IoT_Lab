@@ -135,14 +135,15 @@ const sensors = [
     { id: 'water-level', name: 'Объем воды в колбе', format: 'мл' },//
     { id: 'water-flow', name: 'Датчик потока воды', format: 'л' },//
     { id: 'color', name: 'Датчик цвета (MGS-CLM60)', format: 'RGB' },//
-    { id: 'temp-humid-press', name: 'Температура (MGS-THP80)', format: '°C' },
-    { id: 'temp-humid-press', name: 'Влажность (MGS-THP80)', format: '%' },
+    { id: 'temp', name: 'Температура (MGS-THP80)', format: '°C' },
+    { id: 'humid', name: 'Влажность (MGS-THP80)', format: '%' },
     { id: 'light', name: 'Датчик освещённости (MGS-L75)', format: 'люксы' },//
     { id: 'current', name: 'Датчик тока', format: 'А' },//
-    { id: 'voc-co2', name: 'Датчик ЛОС и СО2 (MGS-CO30)', format: 'ppm' },//
+    { id: 'voc', name: 'Датчик ЛОС (MGS-CO30)', format: 'ppm' },
+    { id: 'co2', name: 'Датчик СО2 (MGS-CO30)', format: 'ppm' },
     { id: 'distance', name: 'Датчик расстояния (MGS-D20)', format: 'см' },//
-    { id: 'reed1', name: 'Геркон 1', format: 'HIGH/LOW' },//
-    { id: 'reed2', name: 'Геркон 2', format: 'HIGH/LOW' },//
+    { id: 'door-reed', name: 'Геркон на двери', format: 'HIGH/LOW' },//
+    { id: 'window-reed', name: 'Геркон на окне', format: 'HIGH/LOW' },//
 ];
 
 // Генерация списка датчиков
@@ -155,6 +156,7 @@ function generateSensorsList() {
             <span class="sensor-name">${sensor.name}</span>
             <span class="spacer"></span>
             <span class="sensor-value" id="${sensor.id}-value">Загрузка...</span>
+            ${sensor.id === 'color' ? '<div id="color-preview" class="color-preview"></div>' : ''}
         `;
         sensorListElement.appendChild(li);
     });
@@ -169,14 +171,36 @@ async function updateSensorValues() {
 
         sensors.forEach(sensor => {
             const valueElement = document.getElementById(`${sensor.id}-value`);
-            const value = data[sensor.id];
+            let value = 1;
+            let r = 0;
+            let g = 0;
+            let b = 0;
+            if (sensor.id == "color") {
+                r = data["red"];
+                g = data["green"];
+                b = data["blue"];
+            } else {
+                value = data[sensor.id];
+            }
             // console.log("Данные  " + sensor.id + " = " + value)
 
             // Форматируем статус (HIGH/LOW)
             if (sensor.format === 'HIGH/LOW') {
                 valueElement.textContent = value;
                 valueElement.className = value === 'HIGH' ? 'sensor-status' : 'sensor-status low';
+            } else if (sensor.id === 'color' && value) {
+                // Обработка RGB значений
+                // const [r, g, b] = value.split(',').map(Number);
+                console.log(r + " " + g + " " + b + "   COLOR")
+                valueElement.textContent = `${r}, ${g}, ${b} ${sensor.format}`;
+
+                const colorPreviewElement = document.getElementById('color-preview');
+                if (colorPreviewElement) {
+                    console.log("Меняю цвет кружочка")
+                    colorPreviewElement.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                }
             } else {
+                // Для остальных форматов
                 valueElement.textContent = `${value} ${sensor.format}`;
             }
         });
@@ -191,3 +215,69 @@ generateSensorsList();
 // Периодическое обновление данных
 setInterval(updateSensorValues, 1000);
 updateSensorValues();
+
+// Контейнер для уведомлений
+const notificationContainer = document.getElementById('notification-container');
+
+// Функция для создания уведомления
+function createNotification(title, message) {
+    const notification = document.createElement('div');
+    notification.classList.add('notification');
+    notification.innerHTML = `
+        <div class="title">${title}</div>
+        <div>${message}</div>
+    `;
+    notificationContainer.appendChild(notification);
+
+    // Удаляем уведомление после завершения анимации
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+// Подписка на уведомления
+async function subscribeToNotifications() {
+    const url = "http://192.168.0.139:8080/api/alert"; // Замените на реальный URL для подписки
+    try {
+        while (true) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error("Ошибка получения уведомлений:", response.statusText);
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Повтор через 5 сек.
+                continue;
+            }
+
+            const data = await response.json();
+
+            // Проверка типа уведомления
+            if (data.type === "gyro") {
+                createNotification(
+                    "Предупреждение о землетрясении",
+                    "Обнаружена сейсмическая активность. Примите меры предосторожности!"
+                );
+            } else if (data.type === "co2") {
+                createNotification(
+                    "Предупреждение о превышении нормы CO2",
+                    "Обнаружено превышение нормы концентрации CO2. Проветрите помещение!"
+                );
+            } else if (data.type === "voc") {
+                createNotification(
+                    "Предупреждение о превышении нормы летучих органических соединений",
+                    "Обнаружено превышение нормы концентрации летучих органических соединений. Проветрите помещение!"
+                );
+            }
+        }
+    } catch (error) {
+        console.error("Ошибка подписки на уведомления:", error);
+        setTimeout(subscribeToNotifications, 5000); // Повтор подписки через 5 сек.
+    }
+}
+
+// Запуск подписки
+subscribeToNotifications();
+
+const adminButton = document.getElementById('toggle-admin-mode');
+
+adminButton.addEventListener('click', () => {
+    location.href = "login.html";
+});

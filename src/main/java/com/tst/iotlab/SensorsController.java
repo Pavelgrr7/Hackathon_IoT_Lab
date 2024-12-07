@@ -8,18 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-//@Service
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
 
 @Service
 public class SensorsController {
@@ -28,24 +21,22 @@ public class SensorsController {
     private final MqttService mqttService;
     private final Map<String, String> sensors;
 
-    // Конструктор с инъекцией зависимости
     public SensorsController(MqttService mqttService) {
         this.mqttService = mqttService;
         this.sensors = Collections.synchronizedMap(new HashMap<>(Map.of(
                 "fan", "false",
                 "pump", "false",
-                "servo1", "false",
-                "servo2", "false",
-                "led", "false"
+                "door-servo", "false",
+                "window-servo", "false",
+                "led", "false",
+                "smart-led", "false"
         )));
     }
 
-    // Получение всех ключей сенсоров
     public Set<String> getKeys() {
         return sensors.keySet();
     }
 
-    // Установить статус сенсора
     public void setSensorStatus(String sensorName, boolean status) {
         logger.info("Setting sensor [{}] to status [{}]", sensorName, status);
         sensors.put(sensorName, Boolean.toString(status));
@@ -61,7 +52,23 @@ public class SensorsController {
         return sensors.getOrDefault(sensorName, "unknown");
     }
 
-    // Приветственное сообщение
+    public void sendToMqtt(String topic, String data) {
+        try {
+            mqttService.publishMessage(topic, data);
+        } catch (MqttException e) {
+            logger.error("Error while sending data to MQTT IN SensorsController");
+        }
+    }
+
+    public boolean waitForResponse(String correlationId, int timeoutMs) {
+        try {
+            return mqttService.waitForResponse(correlationId, timeoutMs);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return  false;
+        }
+    }
+
 //    public void sayHello() {
 //        try {
 ////            mqttService.publishMessage("test/topic", "Hello, esp32 ^_^");

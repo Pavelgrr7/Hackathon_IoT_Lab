@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
         let success = false;
-        postCredenitals(username, password);
+        postCredenitals(username, password, false);
     });
 
     adminLoginButton.addEventListener("click", (event) => {
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault(); // Отменяем стандартное поведение формы
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
-        postCredenitals(username, password, false);
+        postCredenitals(username, password, true);
     });
 });
 
@@ -56,14 +56,24 @@ async function postCredenitals(username, password, isAdmin) {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ "username":username, "password":password }),
+        body: JSON.stringify({ "username":username, "password":password, "isAdmin":isAdmin }),
     });
     const data = await response.json();
     console.log(data)
     const success = data["success"];
     if (success == true) {
-        location.href = "main.html";
+        if (isAdmin == true) {
+            location.href = "service_mode.html";
+        } else {
+            location.href = "main.html";
+        }
     } else {
-        console.log("Неверное имя пользователя или пароль");
+        if (isAdmin == true) {
+            console.log("Неверное имя пользователя или пароль. Возможно у вас нет прав администратора.");
+            alert("Неверное имя пользователя или пароль. Возможно у вас нет прав администратора.");
+        } else {
+            console.log("Неверное имя пользователя или пароль");
+            alert("Неверное имя пользователя или пароль");
+        }
     }
 }

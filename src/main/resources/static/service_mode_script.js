@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             // Делаем запрос на сервер
-            const response = await fetch(`http://192.168.0.139:8080/api/service/`, {
+            const response = await fetch(`http://192.168.0.139:8080/api/service`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify( { "device" : device }),
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             // Если проверка успешна
-            if (data.status === "ok") {
+            if (data.status === true) {
                 checkbox.checked = true;
                 button.disabled = true; // Отключаем кнопку после успешной проверки
             } else {
@@ -57,3 +57,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+
+
+// Контейнер для уведомлений
+const notificationContainer = document.getElementById('notification-container');
+
+// Функция для создания уведомления
+function createNotification(title, message) {
+    const notification = document.createElement('div');
+    notification.classList.add('notification');
+    notification.innerHTML = `
+        <div class="title">${title}</div>
+        <div>${message}</div>
+    `;
+    notificationContainer.appendChild(notification);
+
+    // Удаляем уведомление после завершения анимации
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
