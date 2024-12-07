@@ -48,26 +48,3 @@ public class UserManager {
         return users.containsKey(username) && "admin".equals(users.get(username)[1]);
     }
 }
-
-//public class UserManager {
-//    static Map<String, String> lines;
-//    public UserManager(File file) {
-//        try {
-//            String regex = ":";
-//            BufferedReader br = new BufferedReader(new FileReader(file));
-//            lines = br.lines()
-//                    .map(line -> line.split(regex))
-//                    .collect(Collectors.toMap(
-//                            arr -> arr[0], // Ключ — имя пользователя
-//                            arr -> arr[1]  // Значение — пароль
-//                    ));
-//        } catch (IOException e) {
-//            lines = null;
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public static Map<String, String> getUsers(){
-//        return lines;
-//    }
-//}

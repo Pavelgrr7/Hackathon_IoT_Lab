@@ -138,7 +138,7 @@ const sensors = [
     { id: 'temp', name: 'Температура (MGS-THP80)', format: '°C' },
     { id: 'humid', name: 'Влажность (MGS-THP80)', format: '%' },
     { id: 'light', name: 'Датчик освещённости (MGS-L75)', format: 'люксы' },//
-    { id: 'current', name: 'Датчик тока', format: 'А' },//
+    // { id: 'current', name: 'Датчик тока', format: 'А' },//
     { id: 'voc', name: 'Датчик ЛОС (MGS-CO30)', format: 'ppm' },
     { id: 'co2', name: 'Датчик СО2 (MGS-CO30)', format: 'ppm' },
     { id: 'distance', name: 'Датчик расстояния (MGS-D20)', format: 'см' },//
@@ -191,12 +191,12 @@ async function updateSensorValues() {
             } else if (sensor.id === 'color' && value) {
                 // Обработка RGB значений
                 // const [r, g, b] = value.split(',').map(Number);
-                console.log(r + " " + g + " " + b + "   COLOR")
+                // console.log(r + " " + g + " " + b + "   COLOR")
                 valueElement.textContent = `${r}, ${g}, ${b} ${sensor.format}`;
 
                 const colorPreviewElement = document.getElementById('color-preview');
                 if (colorPreviewElement) {
-                    console.log("Меняю цвет кружочка")
+                    // console.log("Меняю цвет кружочка")
                     colorPreviewElement.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
                 }
             } else {
@@ -239,33 +239,34 @@ function createNotification(title, message) {
 async function subscribeToNotifications() {
     const url = "http://192.168.0.139:8080/api/alert"; // Замените на реальный URL для подписки
     try {
-        while (true) {
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.error("Ошибка получения уведомлений:", response.statusText);
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Повтор через 5 сек.
-                continue;
-            }
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error("Ошибка получения уведомлений:", response.statusText);
+            setTimeout(subscribeToNotifications, 5000);
+            // await new Promise(resolve => setTimeout(resolve, 5000)); // Повтор через 5 сек.
+        }
 
-            const data = await response.json();
+        const data = await response.json();
 
-            // Проверка типа уведомления
-            if (data.type === "gyro") {
-                createNotification(
-                    "Предупреждение о землетрясении",
-                    "Обнаружена сейсмическая активность. Примите меры предосторожности!"
-                );
-            } else if (data.type === "co2") {
-                createNotification(
-                    "Предупреждение о превышении нормы CO2",
-                    "Обнаружено превышение нормы концентрации CO2. Проветрите помещение!"
-                );
-            } else if (data.type === "voc") {
-                createNotification(
-                    "Предупреждение о превышении нормы летучих органических соединений",
-                    "Обнаружено превышение нормы концентрации летучих органических соединений. Проветрите помещение!"
-                );
-            }
+        // Проверка типа уведомления
+        if (data.type === "gyro") {
+            createNotification(
+                "Предупреждение о землетрясении",
+                "Обнаружена сейсмическая активность. Примите меры предосторожности!"
+            );
+            setTimeout(subscribeToNotifications, 5000);
+        } else if (data.type === "co2") {
+            createNotification(
+                "Предупреждение о превышении нормы CO2",
+                "Обнаружено превышение нормы концентрации CO2. Проветрите помещение!"
+            );
+            setTimeout(subscribeToNotifications, 5000);
+        } else if (data.type === "voc") {
+            createNotification(
+                "Предупреждение о превышении нормы летучих органических соединений",
+                "Обнаружено превышение нормы концентрации летучих органических соединений. Проветрите помещение!"
+            );
+            setTimeout(subscribeToNotifications, 5000);
         }
     } catch (error) {
         console.error("Ошибка подписки на уведомления:", error);

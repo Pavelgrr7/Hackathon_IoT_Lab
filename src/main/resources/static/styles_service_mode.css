@@ -1,0 +1,68 @@
+.service-mode {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.service-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+}
+
+.service-item span {
+    flex: 1;
+    text-align: left;
+    margin-right: 10px;
+}
+
+.service-checkbox {
+    margin-left: auto;
+    margin-right: 10px;
+    transform: scale(1.2);
+    cursor: not-allowed;
+}
+
+.service-check-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    flex-shrink: 0;
+}
+
+.service-check-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.service-checkbox {
+    margin-left: 10px;
+    transform: scale(1.2);
+    cursor: not-allowed;
+}
+
+.check-all-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.check-all-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

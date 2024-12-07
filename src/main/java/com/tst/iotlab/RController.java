@@ -28,23 +28,13 @@ public class RController {
     public RController(SensorsController sensorsController) {
         this.sc = sensorsController;
     }
-    // Метод для обработки POST-запроса
-//    @PostMapping("/sensors")
-//    public ResponseEntity<Map<String, String>> sendData(HttpSession session) {
-//        String payload = "water-level;500000000000;water-flow;3.5;leakage;LOW;color;255, 0, 0;temp-humid-press;22, 45, 1013;light;150;current: 2.5;voc-co2;400;distance;5; gyro;0.01, 0.02, 15; reed;HIGH; rotation;1200; led-light;300;";
-////        session.setAttribute("sensors", formatToJson(payload).toString());
-//        session.setAttribute("sensors", payload);
-//        Map<String, String> response = new HashMap<>();
-//        response.put("success", String.valueOf(true));
-//        return ResponseEntity.ok(response);
-//    }
 
     @GetMapping("/sensors")
     public ResponseEntity<Map<String, Object>> OnRequest(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
             List<String> data = List.of(MqttService.getCurrentPayload().split(";"));
-            logger.info("got data to proceed {}", data.toString());
+//            logger.info("got data to proceed {}", data.toString());
 
 //            List<String> data = List.of("water-level;50000;water-flow;3.5;color;60,220,180;temp;22;humid;1013;light;150;current;2.5;voc;402;co2;400;distance;5;gyro;0;door-reed;HIGH;window-reed;LOW".split(";"));
             for (int i = 0; i < data.size(); i += 2) {
@@ -57,6 +47,7 @@ public class RController {
 //                            sensorType = String.join(color, sensorValueStr + " ");
 //                        }
                         if (sensorType.equals("gyro") && sensorValueStr.equals("1")) notifies.put(sensorType, "true");
+//                        else if (sensorType.equals("gyro") && sensorValueStr.equals("0") && notifies.containsKey("gyro") && notifies.get("gyro").equals("1")) notifies.remove(sensorType);
                         else if ((sensorType.equals("co2") || sensorType.equals("voc"))) {
                             if (Integer.parseInt(sensorValueStr) > 1400) {
                                 notifies.put(sensorType, sensorValueStr);
@@ -89,7 +80,8 @@ public class RController {
 //        response.put("distance", "2.5");
 //        response.put("door-reed", "0.01");
 //        response.put("window-reed", "0.02");
-        logger.info("send to client {}", response.toString());
+
+        //logger.info("send to client {}", response.toString());
         if (!response.isEmpty()) {
             return ResponseEntity.ok(response);
         } else {
@@ -103,18 +95,23 @@ public class RController {
         String TYPE = "type";
         String CO2 = "co2";
         String VOC = "voc";
+        //logger.info("NOTIFIES {}", notifies.toString());
         Map<String, Object> response = new HashMap<>();
         if (notifies.containsKey(GYRO)) {
             response.put(TYPE,GYRO);
+            notifies.remove(GYRO);
+            return ResponseEntity.ok(response);
         } else if (notifies.containsKey(CO2)) {
             response.put(TYPE,CO2);
+            notifies.remove(CO2);
+            return ResponseEntity.ok(response);
         } else if (notifies.containsKey(VOC)) {
-            response.put(TYPE,VOC);
-        } else {
-            return ResponseEntity.badRequest().body(response);
+            response.put(TYPE, VOC);
+            notifies.remove(VOC);
+            return ResponseEntity.ok(response);
         }
-//        logger.info("Отправляю клиенту уведомелние: {}", response);
-        return ResponseEntity.ok(response);
+//        logger.info("BAD REQUEST");
+        return ResponseEntity.badRequest().body(new HashMap<>());
     }
 
 
@@ -154,48 +151,6 @@ public class RController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
 
-//                if (credentials.get(TOGGLE) != null) {
-//                    if (credentials.get(TOGGLE).equals("on")) {
-////                    logger.info("im in fisrt if");
-//
-//                        boolean newStatus = true;
-//                        sc.setSensorStatus(device, newStatus);
-//                        response.put("status", newStatus);
-//                        session.setAttribute(device, newStatus);
-//
-//                    } else if (credentials.get(TOGGLE).equals("off")) {
-////                    logger.info("im in second if");
-//                        boolean newStatus = false;
-//                        sc.setSensorStatus(device, newStatus);
-//                        response.put("status", newStatus);
-//                        session.setAttribute(device, newStatus);
-//
-//                    } else if (credentials.get(TOGGLE).isEmpty()) {
-//
-////                        logger.info("im in third if {} {}", SensorsController.getSensorStatus(device), device);
-//                        if (sc.getSensorStatus(device).equals("true")) {
-//                            boolean status = true;
-//                            response.put("status", status);
-//                            session.setAttribute(device, status);
-////                            logger.info("Returned status for device '{}': {}", device, status);
-//                        } else if (sc.getSensorStatus(device).equals("false")) {
-//                            boolean status = false;
-//                            response.put("status", status);
-//                            session.setAttribute(device, status);
-////                            logger.info("Returned status for device '{}': {}", device, status);
-//                        }
-//                    }
-//                }
-//            }
-//        } else {
-//            // Если device не указан, возвращаем ошибку
-//            response.put("error", "Device name is required");
-//            logger.warn("Request does not contain a valid device name");
-//            return ResponseEntity.badRequest().body(response);
-//        }
-
-        // Возврат успешного ответа
-//        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/device")
@@ -244,53 +199,4 @@ public class RController {
 
             return ResponseEntity.ok(response);
         }
-//
-//    public static JsonObject formatToJson(String payload) {
-//        String[] vals = payload.split(";");
-//        JsonObject jsonObject = new JsonObject();
-//        for (int i = 0; i < vals.length; i += 2) {
-//            if (i + 1 < vals.length) {
-//                String key = vals[i];
-//                String value = vals[i + 1];
-//                try {
-//
-//                    jsonObject.addProperty(key, Integer.parseInt(value));
-//                } catch (NumberFormatException e) {
-//
-//                    jsonObject.addProperty(key, value);
-//                }
-//            }
-//        }
-//        return jsonObject;
-//    }
-
-
-//    @PostMapping("/sensors")
-//    public ResponseEntity<Map<String, Object>> sendData(HttpSession session){
-//        String payload = "water-level;456;leakage;101112";
-//        session.setAttribute("sensors",  formatToJson(payload).toString());
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("success", true);
-//        return ResponseEntity.ok(response);
-//    }
-//    public Map<String, String> processData(@RequestBody Map<String, String> data) {
-////        for (String key : data.keySet()) {
-////            if (users.containsKey(key)) {
-////                if (users.get(key).equals(data.get(key))) {
-////                    data.put("Nice", "Success");
-////                }
-////            }
-////        }
-//        data.put("status", "processed");
-//        return data;
-//    }
-
-
-//
-//    @PostMapping("/recivedData")
-//    public ResponseEntity<String> receiveData(@RequestBody Map<String, String> requestData) {
-//        System.out.println("Полученные данные: " + requestData);
-//        String response = "Данные успешно получены";
-//        return ResponseEntity.ok(response);
-//    }
 }

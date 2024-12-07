@@ -41,7 +41,11 @@ public class SensorsController {
         logger.info("Setting sensor [{}] to status [{}]", sensorName, status);
         sensors.put(sensorName, Boolean.toString(status));
         try {
-            mqttService.publishMessage("test/topic", sensorName + ":" + status);
+            int data = 0;
+            if (status) {
+                data = 1;
+            }
+            mqttService.publishMessage("test/topic", sensorName + ":" + data);
         } catch (Exception e) {
             logger.error("Error while publishing sensor status to MQTT", e);
         }
@@ -68,14 +72,6 @@ public class SensorsController {
             return  false;
         }
     }
-
-//    public void sayHello() {
-//        try {
-////            mqttService.publishMessage("test/topic", "Hello, esp32 ^_^");
-//        } catch (Exception e) {
-//            logger.error("Error sending MQTT message in sayHello", e);
-//        }
-//    }
 
     // Инициализация сенсоров
     public void init(Map<String, String> initSensors) {
