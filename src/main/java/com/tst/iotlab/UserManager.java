@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserManager {
-    private Map<String, String[]> users = new HashMap<>();
+    private final Map<String, String[]> users = new HashMap<>();
 
     public UserManager() {
         try {

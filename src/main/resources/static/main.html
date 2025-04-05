@@ -6,94 +6,123 @@
     <title>Статус ресурсов</title>
     <link rel="stylesheet" href="styles_main.css">
     <div id="notification-container" class="notification-container"></div>
+    <!-- Подключаем библиотеку Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="overall-stats">
-        <!-- <div class="stats-container">
-            <div class="stat">
-                <div class="progress-circle" id="cpu-progress">
-                    <span class="progress-value" id="cpu-value">0%</span>
+    <div class="main-container">
+        <!-- Верхний ряд: видео и RFID -->
+        <div class="top-row">
+            <div class="rfid-container">
+                <h1>Информация RFID</h1>
+                <div class="rfid-content">
+                    <div class="rfid-info">
+                        <span class="rfid-icon">🔖</span>
+                        <span class="rfid-value" id="rfid-value">Ожидание сканирования...</span>
+                    </div>
+                    <div class="rfid-details" id="rfid-details">
+                        <!-- Детальная информация о метке будет добавлена динамически -->
+                    </div>
+                    <div class="rfid-logs-btn-container">
+                        <button id="rfid-logs-btn" class="rfid-logs-btn">Просмотр логов</button>
+                    </div>
                 </div>
-                <p>CPU: <span id="cpu-details">1 Core</span></p>
             </div>
-            <div class="stat">
-                <div class="progress-circle" id="ram-progress">
-                    <span class="progress-value" id="ram-value">0%</span>
+            
+            <div class="video-container">
+                <h1>Прямая трансляция</h1>
+                <!-- Слайдер яркости фонарика -->
+                <div class="flash-control">
+                    <label for="flash-slider"><span class="flash-icon">🔦</span> Яркость фонарика:</label>
+                    <input type="range" id="flash-slider" min="0" max="100" value="0" class="flash-slider">
+                    <span id="flash-value">0%</span>
                 </div>
-                <p>RAM: <span id="ram-details">0 MB / 0 GB</span></p>
-            </div>
-            <div class="stat">
-                <div class="progress-circle" id="swap-progress">
-                    <span class="progress-value" id="swap-value">0%</span>
+                <div class="video-player-wrapper">
+                    <img id="mjpeg-stream" src="http://192.168.0.183:5000/video_feed" alt="Видеотрансляция" class="video-stream">
+                    <div class="video-controls">
+                        <button id="fullscreen-toggle" class="video-control-button">
+                            <span class="icon">⛶</span>
+                        </button>
+                    </div>
                 </div>
-                <p>Swap: <span id="swap-details">0 B / 0 MB</span></p>
+                <!-- Контейнер для управления машинкой -->
+                <div id="vehicle-controls-placeholder"></div>
             </div>
-        </div> -->
-        <!-- <script src="script.js"></script> -->
-        <div class="sensors-container">
-            <h1>Список датчиков</h1>
-            <ul class="sensors-list" id="sensors-list">
-                <!-- Датчики будут добавлены динамически -->
-            </ul>
+        </div>
+        
+        <!-- Нижний ряд: датчики и устройства -->
+        <div class="bottom-row">
+            <div class="sensors-container">
+                <h1>Список датчиков</h1>
+                <ul class="sensors-list" id="sensors-list">
+                    <!-- Датчики будут добавлены динамически -->
+                </ul>
+                
+                <!-- Контейнеры для графиков датчиков -->
+                <div class="sensor-panel" id="temp-panel">
+                    <h3>Температура (AMP-B045)</h3>
+                    <div class="chart-container">
+                        <canvas id="temp-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="sensor-panel" id="humid-panel">
+                    <h3>Влажность (AMP-B045)</h3>
+                    <div class="chart-container">
+                        <canvas id="humid-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="devices-container">
+                <h2>Управление RGB-лентой</h2>
+                <div class="rgb-container">
+                    <div class="rgb-controls">
+                        <div class="rgb-header">
+                            <span class="device-icon">💡</span>
+                            <span class="device-name">RGB-лента</span>
+                            <span class="spacer"></span>
+                            <div class="color-preview" id="rgb-color-preview"></div>
+                        </div>
+                        
+                        <div class="rgb-color-selector">
+                            <!-- <label for="color-picker">Нажмите на цветной кружок для выбора цвета</label> -->
+                            <input type="color" id="color-picker" class="color-picker">
+                        </div>
+                        
+                        <div class="rgb-brightness">
+                            <label for="brightness-slider">Яркость:</label>
+                            <input type="range" id="brightness-slider" min="0" max="100" value="100" class="brightness-slider">
+                            <span id="brightness-value">100%</span>
+                        </div>
+                        
+                        <div class="rgb-buttons">
+                            <button id="toggle-rgb" class="toggle-button" data-device="rgb">Включить</button>
+                        </div>
+                        
+                        <div class="rgb-status">
+                            <span>Статус:</span>
+                            <span class="device-status" id="status-rgb">Не работает</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <span class="spacer"></span>
-    <div class="devices-container">
-        <div id="admin-control" style="text-align: right; margin-bottom: 20px;">
-            <button id="toggle-admin-mode" class="admin-button">Выйти/Войти в режим обслуживания</button>
+    
+    <!-- Модальное окно для отображения логов RFID -->
+    <div id="rfid-logs-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">История считывания RFID-меток</h3>
+                <button id="close-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="rfid-logs-content"></div>
+            </div>
         </div>
-        <h2>Управление устройствами</h2>
-        <ul class="devices-list">
-            <li class="device">
-                <span class="device-icon">💧</span>
-                <span class="device-name">Водяная помпа</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="pump">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-pump">Не работает</span>
-            </li>
-            <li class="device">
-                <span class="device-icon">🌀</span>
-                <span class="device-name">Вентилятор</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="fan">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-fan">Не работает</span>
-            </li>
-            <li class="device">
-                <span class="device-icon">🚪</span>
-                <span class="device-name">Сервопривод 1</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="door-servo">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-door-servo">Не работает</span>
-            </li>
-            <li class="device">
-                <span class="device-icon">🪟</span>
-                <span class="device-name">Сервопривод 2</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="window-servo">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-window-servo">Не работает</span>
-            </li>
-            <li class="device">
-                <span class="device-icon">💡</span>
-                <span class="device-name">Светодиодная лента</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="led">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-led">Не работает</span>
-            </li>
-            <li class="device">
-                <span class="device-icon">🧠</span>
-                <span class="device-name">Умный режим LED</span>
-                <span class="spacer"></span>
-                <button class="toggle-button" data-device="smart-led">Включить</button>
-                <span class="spacer"></span>
-                <span class="device-status" id="status-smart-led">Не работает</span>
-            </li>
-        </ul>
     </div>
+    
     <script src="main_script.js"></script>
 </body>
 </html>

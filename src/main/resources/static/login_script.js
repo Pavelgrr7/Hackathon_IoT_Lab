@@ -38,37 +38,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-async function postCredenitals(username, password, isAdmin) {
+async function postCredenitals(username, password, isGuest) {
     console.log("Отправляю JSON:    " + JSON.stringify({ "username":username, "password":password }));
-    let url = "http://192.168.0.139:8080/login";
-    // let url = "http://192.168.1.244:8080/login";
+    // let url = "http://192.168.0.139:8080/login";
+    let url = "http://192.168.1.244:8080/login";
 
-    if (isAdmin == true) {
-        url = "http://192.168.0.139:8080/login";
-        // url = "http://192.168.1.244:8080/login";
+    if (isGuest == true) {
+        // url = "http://192.168.0.139:8080/login";
+        url = "http://192.168.1.244:8080/login";
 
     } else {
-        url = "http://192.168.0.139:8080/login";
-        // url = "http://192.168.1.244:8080/login";
+        // url = "http://192.168.0.139:8080/login";
+        url = "http://192.168.1.244:8080/login";
     }
+    
     const response = await fetch(url, {
         method:"POST",
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ "username":username, "password":password, "isAdmin":isAdmin }),
+        body: JSON.stringify({ "username":username, "password":password, "isGuest":isGuest }),
     });
     const data = await response.json();
     console.log(data)
     const success = data["success"];
     if (success == true) {
-        if (isAdmin == true) {
+        if (isGuest == true) {
             location.href = "service_mode.html";
         } else {
             location.href = "main.html";
         }
     } else {
-        if (isAdmin == true) {
+        if (isGuest == true) {
             console.log("Неверное имя пользователя или пароль. Возможно у вас нет прав администратора.");
             alert("Неверное имя пользователя или пароль. Возможно у вас нет прав администратора.");
         } else {
