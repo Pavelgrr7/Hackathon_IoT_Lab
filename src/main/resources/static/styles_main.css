@@ -116,10 +116,10 @@ h2 {
 
 .sensors-list li {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
     padding: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -313,7 +313,8 @@ h2 {
     height: auto;
     display: block;
     object-fit: contain; /* Соблюдаем соотношение сторон видео */
-    max-height: 450px; /* Делаем видео немного меньше */
+    max-height: 450px; /* Ограничение по высоте для обычного режима */
+    background-color: #000; /* Чёрный фон для видео */
 }
 
 /* Стили для элементов управления видео */
@@ -1006,10 +1007,17 @@ h2 {
     text-align: center;
 }
 
+.sensor-chart-container {
+    margin-top: 15px;
+    width: 100%;
+}
+
 .chart-container {
     width: 100%;
-    height: 200px;
-    margin-top: 10px;
+    height: 180px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 /* Стили для элемента управления яркостью фонарика */
@@ -1040,4 +1048,137 @@ h2 {
 #flash-value {
     min-width: 45px;
     text-align: right;
+}
+
+/* Стили для элементов датчиков */
+.sensor-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+/* Стили для баннера гостевого режима */
+.guest-mode-banner {
+    background-color: #ff9800;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .guest-mode-banner {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+/* Стили для кнопок переключения камер */
+.video-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.video-header h1 {
+    margin-bottom: 5px;
+}
+
+.camera-switch-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.camera-button {
+    padding: 8px 15px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.camera-button:hover {
+    background-color: #e0e0e0;
+}
+
+.camera-button.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #388E3C;
+}
+
+/* Стили для полноэкранного режима */
+.video-player-wrapper:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-player-wrapper:fullscreen .video-stream {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
+}
+
+/* Поддержка для WebKit (Safari) */
+.video-player-wrapper:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-player-wrapper:-webkit-full-screen .video-stream {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
+}
+
+/* Поддержка для Firefox */
+.video-player-wrapper:-moz-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-player-wrapper:-moz-full-screen .video-stream {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
+}
+
+/* Поддержка для MS Edge */
+.video-player-wrapper:-ms-fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-player-wrapper:-ms-fullscreen .video-stream {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
 }

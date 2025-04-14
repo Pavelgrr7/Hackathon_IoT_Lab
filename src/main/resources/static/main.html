@@ -30,18 +30,24 @@
             </div>
             
             <div class="video-container">
-                <h1>Прямая трансляция</h1>
+                <div class="video-header">
+                    <h1>Прямая трансляция</h1>
+                    <div class="camera-switch-buttons">
+                        <button id="camera1-btn" class="camera-button active" data-camera="1">Камера 1 (машинка)</button>
+                        <button id="camera2-btn" class="camera-button" data-camera="2">Камера 2 (шахта)</button>
+                    </div>
+                </div>
                 <!-- Слайдер яркости фонарика -->
                 <div class="flash-control">
-                    <label for="flash-slider"><span class="flash-icon">🔦</span> Яркость фонарика:</label>
-                    <input type="range" id="flash-slider" min="0" max="100" value="0" class="flash-slider">
-                    <span id="flash-value">0%</span>
+                    <label for="flash-toggle"><span class="flash-icon">🔦</span> Фонарик:</label>
+                    <button id="flash-toggle" class="toggle-button">Включить</button>
+                    <span id="flash-status" class="device-status off">Выключен</span>
                 </div>
                 <div class="video-player-wrapper">
-                    <img id="mjpeg-stream" src="http://192.168.0.183:5000/video_feed" alt="Видеотрансляция" class="video-stream">
+                    <img id="mjpeg-stream" src="http://192.168.0.202:81/stream" alt="Видеотрансляция" class="video-stream">
                     <div class="video-controls">
                         <button id="fullscreen-toggle" class="video-control-button">
-                            <span class="icon">⛶</span>
+                            <span class="icon">⤢</span>
                         </button>
                     </div>
                 </div>
@@ -58,20 +64,7 @@
                     <!-- Датчики будут добавлены динамически -->
                 </ul>
                 
-                <!-- Контейнеры для графиков датчиков -->
-                <div class="sensor-panel" id="temp-panel">
-                    <h3>Температура (AMP-B045)</h3>
-                    <div class="chart-container">
-                        <canvas id="temp-chart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="sensor-panel" id="humid-panel">
-                    <h3>Влажность (AMP-B045)</h3>
-                    <div class="chart-container">
-                        <canvas id="humid-chart"></canvas>
-                    </div>
-                </div>
+                <!-- Контейнеры для графиков удаляются отсюда -->
             </div>
             
             <div class="devices-container">

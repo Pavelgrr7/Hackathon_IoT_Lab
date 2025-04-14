@@ -1,4 +1,4 @@
-package com.tst.iotlab;
+package com.tst.iotlab.data;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SensorDataContainer {
+    final static int alert_value = 13;
+    final static int alert_ch4_value = 33;
     private static final Logger logger = LoggerFactory.getLogger(SensorDataContainer.class);
 
     private final Map<String, SensorValue> sensorValues = new ConcurrentHashMap<>();
@@ -31,7 +33,23 @@ public class SensorDataContainer {
 
     public void updateSensorValue(String sensorType, String value) {
         String normalizedType = normalizeSensorType(sensorType);
-
+        if (normalizedType.equals("co2")){
+            if (Integer.parseInt(value) > alert_value) {
+                sensorValues.put("alert", new SensorValue("1"));
+                logger.info("alert is now 1");
+            } else {
+                sensorValues.put("alert", new SensorValue("0"));
+                logger.info("alert is now 0");
+            }
+        } else if (normalizedType.equals("ch4")) {
+            if (Integer.parseInt(value) > alert_ch4_value) {
+                sensorValues.put("alert", new SensorValue("1"));
+                logger.info("alert is now 1");
+            } else {
+                sensorValues.put("alert", new SensorValue("0"));
+                logger.info("alert is now 0");
+            }
+        }
         sensorValues.put(normalizedType, new SensorValue(value));
         logger.debug("Updated sensor data: {} = {}", normalizedType, value);
     }
@@ -61,7 +79,7 @@ public class SensorDataContainer {
         return switch (type) {
             case "temperature", "temp" -> "temp";
             case "humidity", "humid", "hum" -> "humid";
-            case "gas", "co2", "air" -> "gas";
+            case "gas", "co2", "air" -> "co2";
             default -> type;
         };
     }

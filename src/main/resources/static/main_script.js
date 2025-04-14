@@ -1,25 +1,194 @@
 // Функциональность видеоплеера MJPEG
 document.addEventListener('DOMContentLoaded', function() {
+    // Переменная для хранения текущей активной камеры
+    let activeCamera = 1;
+    
+    // URL видеопотоков с камер
+    const cameraStreams = {
+        1: 'http://192.168.0.202:81/stream', // Камера машинки
+        2: 'http://192.168.0.183:5000/video_feed'  // Камера шахты
+    };
+    
+    // Проверка, находимся ли в режиме гостя
+    const isGuestMode = localStorage.getItem('isGuestMode') === 'true';
+    
+    // Если режим гостя, скрываем элементы управления
+    if (isGuestMode) {
+        applyGuestMode();
+    }
+    
     // Видеоплеер MJPEG
     const mjpegStream = document.getElementById('mjpeg-stream');
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
     
+    // Кнопки переключения камер
+    const camera1Btn = document.getElementById('camera1-btn');
+    const camera2Btn = document.getElementById('camera2-btn');
+    
+    // Устанавливаем исходный URL видеопотока соответственно активной камере
+    if (mjpegStream) {
+        mjpegStream.src = cameraStreams[activeCamera];
+        console.log(`Инициализирован видеопоток для камеры ${activeCamera}: ${cameraStreams[activeCamera]}`);
+    }
+    
+    // Обработчики для кнопок переключения камер
+    camera1Btn.addEventListener('click', () => switchCamera(1));
+    camera2Btn.addEventListener('click', () => switchCamera(2));
+    
+    // Функция переключения камер
+    function switchCamera(cameraId) {
+        if (activeCamera === cameraId) return; // Нет необходимости переключать ту же камеру
+        
+        // Проверяем существование потока для выбранной камеры
+        if (!cameraStreams[cameraId]) {
+            console.error(`Ошибка: поток для камеры ${cameraId} не определен`);
+            return;
+        }
+        
+        activeCamera = cameraId;
+        
+        // Обновляем активный класс кнопок
+        if (camera1Btn && camera2Btn) {
+            camera1Btn.classList.toggle('active', cameraId === 1);
+            camera2Btn.classList.toggle('active', cameraId === 2);
+        }
+        
+        // Устанавливаем новый источник видеопотока
+        if (mjpegStream) {
+            // Сбрасываем текущий поток для исключения проблем с кешированием
+            mjpegStream.src = '';
+            // Устанавливаем новый URL
+            setTimeout(() => {
+                mjpegStream.src = cameraStreams[cameraId];
+            }, 50);
+        }
+        
+        // Показываем/скрываем элементы управления в зависимости от активной камеры
+        updateControlsVisibility();
+        
+        console.log(`Переключено на камеру ${cameraId}: ${cameraStreams[cameraId]}`);
+    }
+    
+    // Функция обновления видимости элементов управления
+    function updateControlsVisibility() {
+        console.log(`Обновление элементов управления для камеры ${activeCamera}`);
+        
+        const vehicleControls = document.getElementById('vehicle-controls-placeholder');
+        const vehicleKeys = document.querySelectorAll('.vehicle-key:not(.turn-left):not(.turn-right)');
+        
+        if (activeCamera === 1) {
+            // Камера 1 (машинка) - показываем все элементы управления
+            if (vehicleControls) vehicleControls.style.display = 'block';
+            vehicleKeys.forEach(key => key.style.display = 'flex');
+            
+            // Возвращаем обработчики событий для машинки
+            setKeyHandlersForVehicle();
+            console.log('Активированы органы управления для машинки');
+        } else {
+            // Камера 2 (шахта) - скрываем элементы управления машинкой, оставляя повороты
+            if (vehicleControls) vehicleControls.style.display = 'block';
+            vehicleKeys.forEach(key => key.style.display = 'none');
+            
+            // Меняем обработчики событий для шахты
+            setKeyHandlersForServo2();
+            console.log('Активированы органы управления для шахты');
+        }
+        
+        // Обновляем заголовок блока управления
+        const controlsTitle = document.querySelector('.vehicle-controls-container h3');
+        if (controlsTitle) {
+            controlsTitle.textContent = activeCamera === 1 ? 'Управление машинкой' : 'Управление шахтой';
+            console.log('Обновлен заголовок блока управления: ' + controlsTitle.textContent);
+        }
+        
+        // Если находимся в режиме гостя, применяем ограничения гостевого режима
+        if (isGuestMode) {
+            applyGuestMode();
+        }
+    }
+    
+    // Функция установки обработчиков для управления машинкой (камера 1)
+    function setKeyHandlersForVehicle() {
+        // Эта функция не требует изменений, так как обработчики уже установлены
+        // Просто меняем URL для API фонарика, если нужно
+        flashTargetDevice = 'flash'; // Для API использовать /api/flash
+    }
+    
+    // Функция установки обработчиков для управления шахтой (камера 2)
+    function setKeyHandlersForServo2() {
+        // Изменяем целевое устройство для фонарика
+        flashTargetDevice = 'flash2'; // Для API использовать /api/flash2
+        
+        // Обработчики для стрелок уже установлены в другом месте
+        // Но нужно изменить логику отправки команд
+    }
+    
+    // Переменная для целевого устройства фонарика
+    let flashTargetDevice = 'flash';
+    
     // Кнопка полноэкранного режима
     if (fullscreenBtn) {
         fullscreenBtn.addEventListener('click', function() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else {
-                const videoWrapper = document.querySelector('.video-player-wrapper');
+            const videoWrapper = document.querySelector('.video-player-wrapper');
+            
+            // Проверяем, находимся ли мы в полноэкранном режиме
+            const isFullScreen = Boolean(
+                document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            
+            if (isFullScreen) {
+                // Выходим из полноэкранного режима
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                    document.mozCancelFullScreen();
+                }
+                console.log('Выход из полноэкранного режима');
+            } else if (videoWrapper) {
+                // Входим в полноэкранный режим
                 if (videoWrapper.requestFullscreen) {
                     videoWrapper.requestFullscreen();
                 } else if (videoWrapper.webkitRequestFullscreen) { /* Safari */
                     videoWrapper.webkitRequestFullscreen();
                 } else if (videoWrapper.msRequestFullscreen) { /* IE11 */
                     videoWrapper.msRequestFullscreen();
+                } else if (videoWrapper.mozRequestFullScreen) { /* Firefox */
+                    videoWrapper.mozRequestFullScreen();
                 }
+                console.log('Переход в полноэкранный режим');
             }
         });
+        
+        // Отслеживаем изменения состояния полноэкранного режима
+        document.addEventListener('fullscreenchange', updateFullscreenUI);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+        document.addEventListener('mozfullscreenchange', updateFullscreenUI);
+        document.addEventListener('MSFullscreenChange', updateFullscreenUI);
+        
+        // Функция обновления интерфейса при изменении состояния полноэкранного режима
+        function updateFullscreenUI() {
+            const isFullScreen = Boolean(
+                document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            
+            // Обновляем иконку кнопки в зависимости от состояния
+            const icon = fullscreenBtn.querySelector('.icon');
+            if (icon) {
+                icon.textContent = isFullScreen ? '⤓' : '⤢'; // Разные символы для разных состояний
+            }
+            
+            console.log('Состояние полноэкранного режима изменено:', isFullScreen);
+        }
     }
     
     // Обработка ошибок изображения
@@ -29,9 +198,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // В случае ошибки показываем заглушку
             mjpegStream.src = 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%23333%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20font-family%3D%22Arial%22%20font-size%3D%2220%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EОшибка загрузки видео%3C%2Ftext%3E%3C%2Fsvg%3E';
             
-            // Пробуем восстановить соединение через 5 секунд
+            // Пробуем восстановить соединение через 5 секунд с правильным URL активной камеры
             setTimeout(() => {
-                mjpegStream.src = 'http://192.168.0.183:5000/video_feed';
+                mjpegStream.src = cameraStreams[activeCamera];
+                console.log(`Повторная попытка загрузки видеопотока для камеры ${activeCamera}: ${cameraStreams[activeCamera]}`);
             }, 5000);
         });
     }
@@ -66,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const response = await fetch(
-                // 'http://192.168.0.139:8080/api/rgb',
-                'http://192.168.1.244:8080/api/rgb',
+                'http://192.168.0.139:8080/api/rgb',
+                // 'http://192.168.1.244:8080/api/rgb',
                 {
                 method: 'POST',
                 headers: {
@@ -134,8 +304,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const isTurningOn = toggleButton.textContent === 'Включить';
             
             const response = await fetch(
-                // `http://192.168.0.139:8080/api/device`,
-                `http://192.168.1.244:8080/api/device`,
+                `http://192.168.0.139:8080/api/device`,
+                // `http://192.168.1.244:8080/api/device`,
                 {
                 method: 'POST',
                 headers: {
@@ -194,31 +364,29 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    // Регулярное обновление статуса RGB-ленты
-    async function updateRgbStatus() {
+    // Регулярное обновление статуса RGB-ленты - заменяем на подписку
+    async function subscribeToRgbChanges() {
         try {
+            console.log('Подписываемся на изменения RGB-ленты');
             const response = await fetch(
-                // 'http://192.168.0.139:8080/api/device',
-                'http://192.168.0.244:8080/api/device',
+                'http://192.168.0.139:8080/api/get/rgb',
+                // 'http://192.168.1.244:8080/api/get/rgb',
                 {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    device: 'rgb',
-                    toggle: ''
-                })
+                }
             });
             
             if (!response.ok) {
-                throw new Error(`Ошибка: ${response.status}`);
+                throw new Error(`Ошибка подписки: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('Получены обновленные данные RGB от сервера:', data);
             
-            // Обновляем состояние
-            isRgbOn = data.status;
+            // Обновляем состояние вкл/выкл
+            isRgbOn = data.toggle === 'on';
             statusSpan.textContent = isRgbOn ? 'Работает' : 'Не работает';
             statusSpan.classList.toggle('on', isRgbOn);
             statusSpan.classList.toggle('off', !isRgbOn);
@@ -227,14 +395,47 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleButton.textContent = isRgbOn ? 'Выключить' : 'Включить';
             toggleButton.classList.toggle('off', isRgbOn);
             
+            // Обновляем значение цвета, если оно изменилось
+            if (data.color && data.color !== currentColor) {
+                console.log(`Обновляем цвет: ${currentColor} → ${data.color}`);
+                currentColor = data.color;
+                colorPicker.value = currentColor;
+                
+                // Применяем яркость к предпросмотру
+                const rgb = hexToRgb(currentColor);
+                if (rgb) {
+                    const dimmedColor = applyBrightness(rgb, currentBrightness);
+                    colorPreview.style.backgroundColor = `rgb(${dimmedColor.r}, ${dimmedColor.g}, ${dimmedColor.b})`;
+                }
+            }
+            
+            // Обновляем значение яркости, если оно изменилось
+            if (data.brightness && parseInt(data.brightness) !== currentBrightness) {
+                console.log(`Обновляем яркость: ${currentBrightness} → ${data.brightness}`);
+                currentBrightness = parseInt(data.brightness);
+                brightnessSlider.value = currentBrightness;
+                brightnessValue.textContent = `${currentBrightness}%`;
+                
+                // Применяем яркость к предпросмотру
+                const rgb = hexToRgb(currentColor);
+                if (rgb) {
+                    const dimmedColor = applyBrightness(rgb, currentBrightness);
+                    colorPreview.style.backgroundColor = `rgb(${dimmedColor.r}, ${dimmedColor.g}, ${dimmedColor.b})`;
+                }
+            }
+            
+            // После получения обновления сразу подписываемся снова
+            setTimeout(subscribeToRgbChanges, 5000);
+            
         } catch (error) {
-            console.error('Ошибка при обновлении статуса RGB:', error);
+            console.error('Ошибка при получении обновлений RGB:', error);
+            // При ошибке пытаемся переподписаться через 5 секунд
+            setTimeout(subscribeToRgbChanges, 5000);
         }
     }
     
-    // Запускаем периодическое обновление статуса
-    setInterval(updateRgbStatus, 5000);
-    updateRgbStatus();
+    // Запускаем подписку на обновления вместо таймера
+    subscribeToRgbChanges();
     
     // Работа с логами RFID
     const logsButton = document.getElementById('rfid-logs-btn');
@@ -266,8 +467,8 @@ document.addEventListener('DOMContentLoaded', function() {
             logsContent.innerHTML = '<p class="loading">Загрузка логов...</p>';
             
             const response = await fetch(
-                // 'http://192.168.0.139:8080/rfid/logs'
-                'http://192.168.0.244:8080/rfid/logs'
+                'http://192.168.0.139:8080/rfid/logs'
+                // 'http://192.168.1.244:8080/rfid/logs'
             );
             
             if (!response.ok) {
@@ -351,13 +552,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Подсвечиваем клавишу в интерфейсе
             highlightKey(commandKey, true);
             
-            // Отправляем команду
-            sendVehicleCommand(commandKey, 'pressed');
+            // Проверяем, активна ли первая камера для отправки команд WASD
+            if (activeCamera === 1) {
+                // Отправляем команду для машинки
+                sendVehicleCommand(commandKey, 'pressed');
+            }
             
             // Если нажата русская клавиша, также помечаем соответствующую латинскую как нажатую
             if (russianToEnglish[key]) {
                 keysPressed[russianToEnglish[key]] = true;
             }
+        }
+        
+        // Обработка стрелок влево/вправо для управления сервоприводами
+        if ((key === 'arrowleft' || key === 'arrowright') && !keysPressed[key]) {
+            const servoKey = key === 'arrowleft' ? 'left' : 'right';
+            keysPressed[servoKey] = true;
+            
+            // Подсвечиваем клавишу в интерфейсе
+            highlightKey(servoKey, true);
+            
+            // Отправляем команду
+            sendServoCommand(servoKey, 'pressed');
         }
     });
     
@@ -375,12 +591,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Убираем подсветку клавиши в интерфейсе
             highlightKey(commandKey, false);
             
-            // Отправляем команду
-            sendVehicleCommand(commandKey, 'released');
+            // Проверяем, активна ли первая камера для отправки команд WASD
+            if (activeCamera === 1) {
+                // Отправляем команду для машинки
+                sendVehicleCommand(commandKey, 'released');
+            }
             
             // Если отпущена русская клавиша, также помечаем соответствующую латинскую как отпущенную
             if (russianToEnglish[key]) {
                 keysPressed[russianToEnglish[key]] = false;
+            }
+        }
+        
+        // Обработка стрелок влево/вправо для управления сервоприводами
+        if (key === 'arrowleft' || key === 'arrowright') {
+            const servoKey = key === 'arrowleft' ? 'left' : 'right';
+            if (keysPressed[servoKey]) {
+                keysPressed[servoKey] = false;
+                
+                // Убираем подсветку клавиши в интерфейсе
+                highlightKey(servoKey, false);
+                
+                // Отправляем команду
+                sendServoCommand(servoKey, 'released');
             }
         }
     });
@@ -403,8 +636,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Отправляем команду: ${key} - ${action}`);
             
             const response = await fetch(
-                // 'http://192.168.0.139:8080/api/vehicle',
-                'http://192.168.0.244:8080/api/vehicle',
+                'http://192.168.0.139:8080/api/vehicle',
+                // 'http://192.168.1.244:8080/api/vehicle',
                 {
                 method: 'POST',
                 headers: {
@@ -433,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Заголовок
         const controlsTitle = document.createElement('h3');
-        controlsTitle.textContent = 'Управление машинкой';
+        controlsTitle.textContent = 'Управление';
         controlsContainer.appendChild(controlsTitle);
         
         // Создаем контейнер для клавиш
@@ -468,9 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Для кнопок поворота используем другой URL
             const isServoControl = ['left', 'right'].includes(keyInfo.key);
-            // const apiUrl = isServoControl ? 'http://192.168.0.139:8080/api/servo' : 'http://192.168.0.139:8080/api/vehicle';
-            const apiUrl = isServoControl ? 'http://192.168.0.244:8080/api/servo' : 'http://192.168.0.244:8080/api/vehicle';
-
+            
             // При клике на клавишу симулируем нажатие/отпускание
             keyElement.addEventListener('mousedown', () => {
                 if (!keysPressed[keyInfo.key]) {
@@ -515,7 +746,12 @@ document.addEventListener('DOMContentLoaded', function() {
         controlsContainer.appendChild(keysContainer);
         
         // Добавляем на страницу под видео
-        document.getElementById('vehicle-controls-placeholder').appendChild(controlsContainer);
+        const vehicleControlsPlaceholder = document.getElementById('vehicle-controls-placeholder');
+        if (vehicleControlsPlaceholder) {
+            vehicleControlsPlaceholder.appendChild(controlsContainer);
+        } else {
+            console.error('Не найден контейнер для элементов управления vehicle-controls-placeholder');
+        }
         
         console.log('Элементы управления машинкой созданы');
     }
@@ -523,11 +759,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Отправка команды поворота сервопривода на сервер
     async function sendServoCommand(key, action) {
         try {
-            console.log(`Отправляем команду сервопривода: ${key} - ${action}`);
+            // Определяем endpoint в зависимости от активной камеры
+            const endpoint = activeCamera === 1 ? 'servo' : 'servo2';
+            
+            console.log(`Отправляем команду сервопривода (${endpoint}): ${key} - ${action}`);
             
             const response = await fetch(
-                // 'http://192.168.0.139:8080/api/servo',
-                'http://192.168.0.244:8080/api/servo',
+                `http://192.168.0.139:8080/api/${endpoint}`,
+                // `http://192.168.1.244:8080/api/${endpoint}`,
                 {
                 method: 'POST',
                 headers: {
@@ -543,50 +782,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(`Ошибка отправки команды сервопривода: ${response.status}`);
             }
             
-            console.log(`Отправлена команда сервопривода: ${key} - ${action}`);
+            console.log(`Отправлена команда сервопривода (${endpoint}): ${key} - ${action}`);
         } catch (error) {
-            console.error('Ошибка при отправке команды сервопривода:', error);
+            console.error(`Ошибка при отправке команды сервопривода (${endpoint}):`, error);
         }
     }
     
-    // Обработчик нажатия клавиш для поворота сервопривода
-    document.addEventListener('keydown', function(event) {
-        const key = event.key.toLowerCase();
-        
-        // Обработка стрелок влево/вправо
-        if ((key === 'arrowleft' || key === 'arrowright') && !keysPressed[key]) {
-            const servoKey = key === 'arrowleft' ? 'left' : 'right';
-            keysPressed[servoKey] = true;
-            
-            // Подсвечиваем клавишу в интерфейсе
-            highlightKey(servoKey, true);
-            
-            // Отправляем команду
-            sendServoCommand(servoKey, 'pressed');
-        }
-    });
-    
-    // Обработчик отпускания клавиш для поворота сервопривода
-    document.addEventListener('keyup', function(event) {
-        const key = event.key.toLowerCase();
-        
-        // Обработка стрелок влево/вправо
-        if (key === 'arrowleft' || key === 'arrowright') {
-            const servoKey = key === 'arrowleft' ? 'left' : 'right';
-            if (keysPressed[servoKey]) {
-                keysPressed[servoKey] = false;
-                
-                // Убираем подсветку клавиши в интерфейсе
-                highlightKey(servoKey, false);
-                
-                // Отправляем команду
-                sendServoCommand(servoKey, 'released');
-            }
-        }
-    });
-    
-    // Добавляем элементы управления на страницу
-    createVehicleControls();
+    // Добавляем элементы управления на страницу (если контейнер существует)
+    const vehicleControlsPlaceholder = document.getElementById('vehicle-controls-placeholder');
+    if (vehicleControlsPlaceholder) {
+        createVehicleControls();
+    } else {
+        console.error('Не найден контейнер для элементов управления vehicle-controls-placeholder');
+    }
     
     // Предотвращаем действия браузера по умолчанию для клавиш управления
     window.addEventListener('keydown', function(e) {
@@ -596,52 +804,218 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Обработчик слайдера яркости фонарика
-    const flashSlider = document.getElementById('flash-slider');
-    const flashValue = document.getElementById('flash-value');
+    // Обработчик переключателя фонарика
+    const flashToggle = document.getElementById('flash-toggle');
+    const flashStatus = document.getElementById('flash-status');
     
-    if (flashSlider && flashValue) {
-        let flashTimeout;
+    if (flashToggle && flashStatus) {
+        // Состояние фонарика
+        let isFlashOn = false;
         
-        flashSlider.addEventListener('input', function(e) {
-            const brightnessValue = e.target.value;
-            flashValue.textContent = `${brightnessValue}%`;
+        flashToggle.addEventListener('click', function() {
+            // Инвертируем состояние
+            isFlashOn = !isFlashOn;
             
-            // Очищаем предыдущий таймаут, чтобы не отправлять слишком много запросов
-            clearTimeout(flashTimeout);
+            // Обновляем UI
+            flashToggle.textContent = isFlashOn ? 'Выключить' : 'Включить';
+            flashStatus.textContent = isFlashOn ? 'Включен' : 'Выключен';
+            flashStatus.classList.toggle('on', isFlashOn);
+            flashStatus.classList.toggle('off', !isFlashOn);
             
-            // Устанавливаем новый таймаут для отправки запроса
-            flashTimeout = setTimeout(() => {
-                updateFlashBrightness(brightnessValue);
-            }, 100);
+            // Отправляем команду на сервер
+            updateFlashState(isFlashOn ? '1' : '0');
         });
         
-        // Функция для отправки значения яркости фонарика на сервер
-        async function updateFlashBrightness(brightness) {
+        // Функция для отправки состояния фонарика на сервер
+        async function updateFlashState(state) {
             try {
-                console.log(`Обновляем яркость фонарика: ${brightness}%`);
+                console.log(`Изменение состояния фонарика (${flashTargetDevice}): ${state}`);
                 
                 const response = await fetch(
-                    // 'http://192.168.0.139:8080/api/flash',
-                    'http://192.168.0.244:8080/api/flash',
+                    `http://192.168.0.139:8080/api/${flashTargetDevice}`,
+                    // `http://192.168.1.244:8080/api/${flashTargetDevice}`,
                     {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        brightness: parseInt(brightness)
+                        brightness: state
                     })
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`Ошибка обновления яркости фонарика: ${response.status}`);
+                    throw new Error(`Ошибка изменения состояния фонарика: ${response.status}`);
                 }
                 
-                console.log(`Яркость фонарика обновлена: ${brightness}%`);
+                console.log(`Состояние фонарика (${flashTargetDevice}) изменено: ${state}`);
             } catch (error) {
-                console.error('Ошибка при обновлении яркости фонарика:', error);
+                console.error(`Ошибка при изменении состояния фонарика (${flashTargetDevice}):`, error);
+                // Возвращаем состояние UI обратно в случае ошибки
+                isFlashOn = !isFlashOn;
+                flashToggle.textContent = isFlashOn ? 'Выключить' : 'Включить';
+                flashStatus.textContent = isFlashOn ? 'Включен' : 'Выключен';
+                flashStatus.classList.toggle('on', isFlashOn);
+                flashStatus.classList.toggle('off', !isFlashOn);
+                
+                alert('Ошибка изменения состояния фонарика. Проверьте соединение с сервером.');
             }
+        }
+    }
+    
+    // Функция для применения режима гостя
+    function applyGuestMode() {
+        console.log('Применяется режим гостя');
+        
+        // Скрываем управление машинкой, но оставляем возможность переключения камер
+        const vehicleControls = document.getElementById('vehicle-controls-placeholder');
+        if (vehicleControls) vehicleControls.style.display = 'none';
+        
+        // Скрываем кнопку управления фонариком, но оставляем отображение статуса
+        const flashControl = document.querySelector('.flash-control');
+        if (flashControl) {
+            const flashToggle = document.getElementById('flash-toggle');
+            if (flashToggle) flashToggle.style.display = 'none';
+            
+            // Меняем стиль отображения для статуса фонарика
+            const flashStatus = document.getElementById('flash-status');
+            if (flashStatus) {
+                flashStatus.style.marginLeft = '10px';
+            }
+            
+            // Не скрываем .flash-control полностью, чтобы статус оставался видимым
+            // flashControl.style.display = 'none';
+        }
+        
+        // Скрываем кнопки управления RGB-лентой, но оставляем видимыми статус, цвет и яркость
+        const rgbControls = document.querySelector('.rgb-controls');
+        if (rgbControls) {
+            // Создаём информационную панель для режима гостя
+            const rgbInfoContainer = document.createElement('div');
+            rgbInfoContainer.className = 'rgb-guest-info';
+            rgbInfoContainer.style.marginTop = '15px';
+            rgbInfoContainer.style.padding = '10px';
+            rgbInfoContainer.style.backgroundColor = '#f8f9fa';
+            rgbInfoContainer.style.borderRadius = '5px';
+            
+            // Добавляем информацию о текущем цвете
+            const colorInfo = document.createElement('div');
+            colorInfo.style.display = 'flex';
+            colorInfo.style.alignItems = 'center';
+            colorInfo.style.marginBottom = '10px';
+            
+            colorInfo.innerHTML = `
+                <span style="margin-right: 10px; font-weight: bold;">Текущий цвет:</span>
+                <div id="rgb-guest-color-preview" style="width: 25px; height: 25px; border-radius: 50%; border: 1px solid #ccc;"></div>
+            `;
+            
+            // Добавляем информацию о текущей яркости
+            const brightnessInfo = document.createElement('div');
+            brightnessInfo.style.display = 'flex';
+            brightnessInfo.style.alignItems = 'center';
+            
+            brightnessInfo.innerHTML = `
+                <span style="margin-right: 10px; font-weight: bold;">Текущая яркость:</span>
+                <span id="rgb-guest-brightness">0%</span>
+            `;
+            
+            rgbInfoContainer.appendChild(colorInfo);
+            rgbInfoContainer.appendChild(brightnessInfo);
+            
+            // Сохраняем оригинальный статус
+            const statusElement = rgbControls.querySelector('.rgb-status');
+            
+            // Очищаем родительский контейнер и добавляем только нужные элементы
+            rgbControls.innerHTML = '';
+            rgbControls.appendChild(statusElement);
+            rgbControls.appendChild(rgbInfoContainer);
+            
+            // Устанавливаем начальный цвет превью
+            const colorPreview = document.getElementById('rgb-guest-color-preview');
+            const brightnessElement = document.getElementById('rgb-guest-brightness');
+            
+            // Функция обновления информации о цвете и яркости в режиме гостя
+            async function subscribeToGuestRgbChanges() {
+                // Обновляем данные на основе текущих значений
+                colorPreview.style.backgroundColor = currentColor;
+                brightnessElement.textContent = `${currentBrightness}%`;
+                
+                try {
+                    console.log('Гостевой режим: подписываемся на изменения RGB-ленты');
+                    const response = await fetch(
+                        'http://192.168.0.139:8080/api/get/rgb',
+                        {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        }
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error(`Ошибка подписки в гостевом режиме: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Гостевой режим: получены обновленные данные RGB:', data);
+                    
+                    // Обновляем статус включения/выключения
+                    statusElement.textContent = data.toggle === 'on' ? 'Работает' : 'Не работает';
+                    statusElement.classList.toggle('on', data.toggle === 'on');
+                    statusElement.classList.toggle('off', data.toggle !== 'on');
+                    
+                    // Обновляем цвет
+                    if (data.color) {
+                        const rgb = hexToRgb(data.color);
+                        if (rgb) {
+                            const dimmedColor = applyBrightness(rgb, data.brightness ? parseInt(data.brightness) : 100);
+                            colorPreview.style.backgroundColor = `rgb(${dimmedColor.r}, ${dimmedColor.g}, ${dimmedColor.b})`;
+                        }
+                    }
+                    
+                    // Обновляем яркость
+                    if (data.brightness) {
+                        brightnessElement.textContent = `${data.brightness}%`;
+                    }
+                    
+                    // Подписываемся снова
+                    setTimeout(subscribeToGuestRgbChanges, 5000);
+                    
+                } catch (error) {
+                    console.error('Ошибка обновления RGB в гостевом режиме:', error);
+                    // При ошибке пытаемся переподписаться через 5 секунд
+                    setTimeout(subscribeToGuestRgbChanges, 5000);
+                }
+            }
+            
+            // Запускаем подписку вместо интервала
+            subscribeToGuestRgbChanges();
+        }
+        
+        // Скрываем элементы управления видеоплеером, кроме кнопок переключения камер
+        const videoControls = document.querySelector('.video-controls');
+        if (videoControls) videoControls.style.display = 'none';
+        
+        // Добавляем индикатор режима гостя в верхнюю часть страницы
+        const mainContainer = document.querySelector('.main-container');
+        if (mainContainer) {
+            const guestBannerContainer = document.createElement('div');
+            guestBannerContainer.className = 'guest-mode-banner';
+            
+            // Добавляем текст и кнопку выхода
+            guestBannerContainer.innerHTML = `
+                <span>Режим просмотра (гость)</span>
+                <button id="exit-guest-mode" style="margin-left: 15px; padding: 5px 10px; background-color: white; color: #ff9800; border: none; border-radius: 3px; cursor: pointer;">Выйти</button>
+            `;
+            
+            mainContainer.insertBefore(guestBannerContainer, mainContainer.firstChild);
+            
+            // Добавляем обработчик для кнопки выхода
+            document.getElementById('exit-guest-mode').addEventListener('click', () => {
+                // Удаляем флаг гостевого режима и перенаправляем на страницу входа
+                localStorage.removeItem('isGuestMode');
+                location.href = 'login.html';
+            });
         }
     }
 });
@@ -649,13 +1023,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // Список датчиков с описаниями
 const sensors = [
     { id: 'temp', name: 'Температура (AMP-B045)', format: '°C', color: 'rgba(255, 99, 132, 1)', bgColor: 'rgba(255, 99, 132, 0.2)' },
-    { id: 'humid', name: 'Влажность (AMP-B045)', format: '%', color: 'rgba(54, 162, 235, 1)', bgColor: 'rgba(54, 162, 235, 0.2)' }
+    { id: 'humid', name: 'Влажность (AMP-B045)', format: '%', color: 'rgba(54, 162, 235, 1)', bgColor: 'rgba(54, 162, 235, 0.2)' },
+    { id: 'co2', name: 'CO2 (AMP-B057)', format: 'ppm', color: 'rgba(255, 206, 86, 1)', bgColor: 'rgba(255, 206, 86, 0.2)' },
+    { id: 'lpg', name: 'LPG (AMP-B057)', format: 'ppm', color: 'rgba(75, 192, 192, 1)', bgColor: 'rgba(75, 192, 192, 0.2)' },
+    { id: 'ch4', name: 'CH4 (AMP-B057)', format: 'ppm', color: 'rgba(153, 102, 255, 1)', bgColor: 'rgba(153, 102, 255, 0.2)' }
 ];
 
 // Хранилище для данных графиков
 const sensorData = {
     temp: { values: [], labels: [] },
-    humid: { values: [], labels: [] }
+    humid: { values: [], labels: [] },
+    co2: { values: [], labels: [] },
+    lpg: { values: [], labels: [] },
+    ch4: { values: [], labels: [] }
 };
 
 // Объекты графиков
@@ -670,18 +1050,40 @@ const sensorListElement = document.getElementById('sensors-list');
 function generateSensorsList() {
     sensors.forEach(sensor => {
         const li = document.createElement('li');
-        li.innerHTML = `
+        
+        // Создаем обертку для информации о датчике
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'sensor-info';
+        infoDiv.innerHTML = `
             <span class="sensor-name">${sensor.name}</span>
             <span class="spacer"></span>
             <span class="sensor-value" id="${sensor.id}-value">Загрузка...</span>
         `;
+        
+        li.appendChild(infoDiv);
+        
+        // Добавляем контейнер для графика внутри элемента списка только для температуры и влажности
+        if (sensor.id === 'temp' || sensor.id === 'humid') { 
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'sensor-chart-container';
+            chartContainer.innerHTML = `
+                <div class="chart-container">
+                    <canvas id="${sensor.id}-chart"></canvas>
+                </div>
+            `;
+            li.appendChild(chartContainer);
+        }
+        
         sensorListElement.appendChild(li);
     });
 }
 
 // Инициализация графиков
 function initCharts() {
-    sensors.forEach(sensor => {
+    // Отфильтруем только датчики с графиками (температура и влажность)
+    const sensorsWithCharts = sensors.filter(sensor => sensor.id === 'temp' || sensor.id === 'humid');
+    
+    sensorsWithCharts.forEach(sensor => {
         const ctx = document.getElementById(`${sensor.id}-chart`);
         if (!ctx) return;
         
@@ -741,7 +1143,8 @@ function initCharts() {
 
 // Функция обновления графика датчика
 function updateChart(sensorId, value) {
-    if (!charts[sensorId]) return;
+    // Обновляем только графики температуры и влажности
+    if (!charts[sensorId] || (sensorId !== 'temp' && sensorId !== 'humid')) return;
     
     const now = new Date();
     const timeLabel = now.toLocaleTimeString();
@@ -768,8 +1171,8 @@ function updateChart(sensorId, value) {
 async function updateSensorValues() {
     try {
         const response = await fetch(
-            // 'http://192.168.0.139:8080/api/get/data'
-            'http://192.168.0.244:8080/api/get/data'
+            'http://192.168.0.139:8080/api/get/data'
+            // 'http://192.168.1.244:8080/api/get/data'
         );
         const data = await response.json();
 
@@ -827,25 +1230,44 @@ function createNotification(title, message) {
 
 // Подписка на уведомления
 async function subscribeToNotifications() {
-    // const url = "http://192.168.0.139:8080/api/alert";
-    const url = "http://192.168.1.244:8080/api/alert";
+    const url = "http://192.168.0.139:8080/api/alert";
+    // const url = "http://192.168.1.244:8080/api/alert";
     try {
         const response = await fetch(url);
         if (!response.ok) {
             console.error("Ошибка получения уведомлений:", response.statusText);
             setTimeout(subscribeToNotifications, 5000);
+            return;
         }
 
         const data = await response.json();
 
         // Проверка типа уведомления
-        if (data.type === "gas") {
-            createNotification(
-                "Предупреждение о загазованности",
-                "Обнаружено превышение нормы загазованности. Проветрите помещение!"
-            );
-            setTimeout(subscribeToNotifications, 5000);
+        if (data.type) {
+            let title, message;
+            
+            switch (data.type) {
+                case "co2":
+                    title = "Предупреждение о превышении CO2";
+                    message = "Обнаружено превышение нормы концентрации CO2. Проветрите помещение!";
+                    break;
+                case "lpg":
+                    title = "Предупреждение о превышении LPG";
+                    message = "Обнаружено превышение нормы LPG (сжиженный нефтяной газ). Проверьте помещение!";
+                    break;
+                case "ch4":
+                    title = "Предупреждение о превышении CH4";
+                    message = "Обнаружено превышение нормы CH4 (метан). Проверьте помещение!";
+                    break;
+                default:
+                    title = "Предупреждение о загазованности";
+                    message = "Обнаружено превышение нормы загазованности. Проветрите помещение!";
+            }
+            
+            createNotification(title, message);
         }
+        
+        setTimeout(subscribeToNotifications, 5000);
     } catch (error) {
         console.error("Ошибка подписки на уведомления:", error);
         setTimeout(subscribeToNotifications, 5000);
@@ -859,8 +1281,8 @@ subscribeToNotifications();
 async function updateRfidInfo() {
     try {
         const response = await fetch(
-            // 'http://192.168.0.139:8080/rfid/logs/latest'
-            'http://192.168.0.244:8080/rfid/logs/latest'
+            'http://192.168.0.139:8080/rfid/logs/latest'
+            // 'http://192.168.1.244:8080/rfid/logs/latest'
         );
         const data = await response.json();
         

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статус ресурсов</title>
+    <link rel="stylesheet" href="styles_main.css">
+    <div id="notification-container" class="notification-container"></div>
+</head>
+<body>
+    <div class="overall-stats">
+        <!-- <div class="stats-container">
+            <div class="stat">
+                <div class="progress-circle" id="cpu-progress">
+                    <span class="progress-value" id="cpu-value">0%</span>
+                </div>
+                <p>CPU: <span id="cpu-details">1 Core</span></p>
+            </div>
+            <div class="stat">
+                <div class="progress-circle" id="ram-progress">
+                    <span class="progress-value" id="ram-value">0%</span>
+                </div>
+                <p>RAM: <span id="ram-details">0 MB / 0 GB</span></p>
+            </div>
+            <div class="stat">
+                <div class="progress-circle" id="swap-progress">
+                    <span class="progress-value" id="swap-value">0%</span>
+                </div>
+                <p>Swap: <span id="swap-details">0 B / 0 MB</span></p>
+            </div>
+        </div> -->
+        <!-- <script src="script.js"></script> -->
+        <div class="sensors-container">
+            <h1>Список датчиков</h1>
+            <ul class="sensors-list" id="sensors-list">
+                <!-- Датчики будут добавлены динамически -->
+            </ul>
+        </div>
+    </div>
+    <span class="spacer"></span>
+    <div class="devices-container">
+        <div id="admin-control" style="text-align: right; margin-bottom: 20px;">
+            <button id="toggle-admin-mode" class="admin-button">Выйти/Войти в режим обслуживания</button>
+        </div>
+        <h2>Управление устройствами</h2>
+        <ul class="devices-list">
+            <li class="device">
+                <span class="device-icon">💧</span>
+                <span class="device-name">Водяная помпа</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="pump">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-pump">Не работает</span>
+            </li>
+            <li class="device">
+                <span class="device-icon">🌀</span>
+                <span class="device-name">Вентилятор</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="fan">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-fan">Не работает</span>
+            </li>
+            <li class="device">
+                <span class="device-icon">🚪</span>
+                <span class="device-name">Сервопривод 1</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="door-servo">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-door-servo">Не работает</span>
+            </li>
+            <li class="device">
+                <span class="device-icon">🪟</span>
+                <span class="device-name">Сервопривод 2</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="window-servo">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-window-servo">Не работает</span>
+            </li>
+            <li class="device">
+                <span class="device-icon">💡</span>
+                <span class="device-name">Светодиодная лента</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="led">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-led">Не работает</span>
+            </li>
+            <li class="device">
+                <span class="device-icon">🧠</span>
+                <span class="device-name">Умный режим LED</span>
+                <span class="spacer"></span>
+                <button class="toggle-button" data-device="smart-led">Включить</button>
+                <span class="spacer"></span>
+                <span class="device-status" id="status-smart-led">Не работает</span>
+            </li>
+        </ul>
+    </div>
+    <script src="main_script.js"></script>
+</body>
+</html>

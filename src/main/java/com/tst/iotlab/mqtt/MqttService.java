@@ -89,7 +89,6 @@ public class MqttService {
             String payload = new String(msg.getPayload());
             logger.info("Message received on topic {}: {}", t, payload);
 
-            // Передача сообщения в менеджер обработчиков
             handlerManager.processMessage(t, payload);
         });
     }

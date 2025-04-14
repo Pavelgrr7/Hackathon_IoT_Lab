@@ -1,94 +1,88 @@
-//package com.tst.iotlab.restControllers;
-//
-//import com.tst.iotlab.mqtt.MqttService;
-//import org.eclipse.paho.client.mqttv3.MqttException;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//
-//import java.util.HashMap;
-//import java.util.Map;
-//import java.util.Set;
-//
-//import org.springframework.stereotype.Service;
-//
-//
-//import java.util.Collections;
-//
-//
-//@Service
-//public class SensorsController {
-//    private static final Logger logger = LoggerFactory.getLogger(SensorsController.class);
-//
-//    private final MqttService mqttService;
-//    private final Map<String, Boolean> sensors;
-//    private final Map<String, Integer> values;
-//
-//    public SensorsController(MqttService mqttService) {
-//        this.mqttService = mqttService;
-//        this.sensors = Collections.synchronizedMap(new HashMap<>(Map.of(
-//                "rgb", false,
-//                "gas", false,
-//                "temp", false,
-//                "humid", false,
-//                "servo", false
-//        )));
-//        this.values = Collections.synchronizedMap(new HashMap<>(Map.of(
-//                "rgb", -1,
-//                "gas", -1,
-//                "temp", -1,
-//                "humid", -1,
-//                "servo", -1
-//        )));
-//    }
-//
-//    public Set<String> getKeys() {
-//        return sensors.keySet();
-//    }
-//
-//    public void setSensorStatus(String sensorName, boolean status) {
-//        logger.info("Setting sensor [{}] to status [{}]", sensorName, status);
-//        sensors.put(sensorName, status);
-//        try {
-//            int data = 0;
-//            if (status) {
-//                data = 1;
-//            }
-//            mqttService.publishMessage("test/topic", sensorName + ":" + data);
-//        } catch (Exception e) {
-//            logger.error("Error while publishing sensor status to MQTT", e);
-//        }
-//    }
-//
-//    public Boolean getSensorStatus(String sensorName) {
-//        return sensors.getOrDefault(sensorName, false);
-//    }
-//
-//    public Integer getSensorValue(String sensorName) {
-//        return values.getOrDefault(sensorName, -1);
-//    }
-//
-//    public void sendToMqtt(String topic, String data) {
-//        try {
-//            mqttService.publishMessage(topic, data);
-//        } catch (MqttException e) {
-//            logger.error("Error while sending data to MQTT IN SensorsController");
-//        }
-//    }
-//
-//    public boolean waitForResponse(String correlationId, int timeoutMs) {
-//        try {
-//            return mqttService.waitForResponse(correlationId, timeoutMs);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return  false;
-//        }
-//    }
-//
-//    // Инициализация сенсоров
-//    public void init(Map<String, Boolean> initSensors) {
-//        sensors.clear();
-//        sensors.putAll(initSensors);
-//        logger.info("Sensors initialized: {}", sensors);
-//    }
-//}
-//
+package com.tst.iotlab.restControllers;
+
+import com.tst.iotlab.data.WebDataContainer;
+import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+public class SensorsController implements DataChangeListener {
+    private static final Logger logger = LoggerFactory.getLogger(SensorsController.class);
+    private final WebDataContainer webDataContainer;
+
+    @Autowired
+    public SensorsController(WebDataContainer webDataContainer) {
+        this.webDataContainer = webDataContainer;
+        this.webDataContainer.registerListener(this);
+    }
+
+    //formerly /rgb
+    @PostMapping("/rgb")
+    public ResponseEntity<Map<String, Object>> OnDeviceStatusChanged(@RequestBody Map<String, String> credentials, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        String color = credentials.get("color");
+        String brightness = credentials.get("brightness");
+        String toggle = credentials.get("toggle");
+        logger.info("пришло сообщение на /rgb");
+        if (color != null) {
+            logger.info("data is {} {} {}", color, brightness, toggle);
+            webDataContainer.updateFieldValue("color", color, false);
+            webDataContainer.updateFieldValue("brightness", brightness, false);
+            if (toggle != null) webDataContainer.updateFieldValue("toggle", toggle, false);
+            logger.info("container: {}",webDataContainer.getAllValues());
+        } else {
+            response.put("error", "color is required");
+            logger.warn("Request does not contain a valid color! {}", credentials);
+            return ResponseEntity.badRequest().body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/device")
+    public ResponseEntity<Map<String, Object>> PostIfStatusChanged(@RequestBody Map<String, String> credentials, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        String device = credentials.get("device");
+        logger.info("Пришло сообщение на /device {}", credentials);
+        if (device.equals("rgb")) {
+            webDataContainer.updateFieldValue("rgb", credentials.get("toggle"), true);
+//            response.put("status", true); // зазаа
+        } else if (device.equals("servo")) {
+
+        }
+        if (!response.isEmpty()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/get/rgb")
+    public ResponseEntity<Map<String, Object>> onWebDataChanged() {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> data = webDataContainer.getAllValues();
+        for (String key : data.keySet()) {
+            String value = webDataContainer.getFieldValue(key);
+            response.put(key, value);
+//            logger.info("sedning to /get/rgb {}", response);
+        }
+        if (!response.isEmpty()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @Override
+    public void onDataChanged() {
+        this.onWebDataChanged();
+    }
+}
+

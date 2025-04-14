@@ -36,7 +36,7 @@ public class RfidController {
     public ResponseEntity<String> sendNewRfid() {
         try {
             logFilePath = Paths.get(dataDir, "static/data/log.json").toAbsolutePath();
-            logger.info("Log file path initialized to: {}", logFilePath);
+//            logger.info("Log file path initialized to: {}", logFilePath);
             if (!Files.exists(logFilePath)) {
                 return ResponseEntity.ok("{\"message\":\"No RFID records file found\"}");
             }

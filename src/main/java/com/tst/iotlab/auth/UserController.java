@@ -1,4 +1,4 @@
-package com.tst.iotlab;
+package com.tst.iotlab.auth;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;

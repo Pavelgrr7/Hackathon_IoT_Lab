@@ -1,4 +1,4 @@
-package com.tst.iotlab;
+package com.tst.iotlab.auth;
 
 import java.io.*;
 import java.util.Map;
